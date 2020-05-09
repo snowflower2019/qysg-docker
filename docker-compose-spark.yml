@@ -1,0 +1,72 @@
+version: "3.3"
+
+services:
+
+  sparkmaster:
+    image: gettyimages/spark
+    container_name: sparkmaster
+    command: bin/spark-class org.apache.spark.deploy.master.Master -h sparkmaster
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.50
+    environment:
+      MASTER: spark://sparkmaster:7077
+      SPARK_CONF_DIR: /conf
+      SPARK_MASTER_WEBUI_PORT: 8090
+    volumes:
+      - ./spark/master/conf:/conf
+      - ./spark/master/data:/data
+      - ./spark/master/jars:/jars
+      
+  sparkworker1:
+    image: gettyimages/spark
+    container_name: sparkworker1
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://sparkmaster:7077
+    restart: always
+    depends_on:
+      - sparkmaster
+    links:
+      - sparkmaster
+    networks:
+      default:
+        ipv4_address: ${ip_address}.51
+    environment:
+      SPARK_CONF_DIR: /conf
+      SPARK_WORKER_CORES: 8
+      SPARK_WORKER_MEMORY: 8g
+      SPARK_WORKER_PORT: 8881
+      SPARK_WORKER_WEBUI_PORT: 8091
+    volumes:
+      - ./spark/worker1/conf:/conf
+      - ./spark/worker1/data:/data
+
+  sparkworker2:
+    image: gettyimages/spark
+    container_name: sparkworker2
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://sparkmaster:7077
+    networks:
+      default:
+        ipv4_address: ${ip_address}.52
+    restart: always
+    depends_on:
+      - sparkmaster
+    links:
+      - sparkmaster
+    environment:
+      SPARK_CONF_DIR: /conf
+      SPARK_WORKER_CORES: 8
+      SPARK_WORKER_MEMORY: 8g
+      SPARK_WORKER_PORT: 8881
+      SPARK_WORKER_WEBUI_PORT: 8092
+    volumes:
+      - ./spark/worker2/conf:/conf
+      - ./spark/worker2/data:/data
+
+
+
+networks:
+  default:
+    external:
+      name: webnet
+

@@ -1,0 +1,93 @@
+version: "3.3"
+
+services:
+
+  hbase-master:
+    image: harisekhon/hbase:${VERSION:-latest}
+    container_name: hbasemaster
+    command: master
+    restart: always
+    hostname: ${ip_address}.80
+    networks:
+      default:
+        ipv4_address: ${ip_address}.80
+    environment:
+      - "HBASE_MANAGES_ZK=false"
+      - "ZK_HOST=zookeeper"
+      - "ZK_PORT=2181"
+    external_links:
+      - zookeeper
+      - namenode
+    volumes:
+      - ./hbase/master/conf:/hbase/conf
+      - ./hbase/master/logs:/hbase/logs
+      - ./hbase/master/data:/hbase-data
+#    ports:
+#      - 16000:16000
+#      - 16010:16010
+
+  hbase-regionserver:
+    image: harisekhon/hbase:${VERSION:-latest}
+    container_name: hbaseregion
+    command: regionserver
+    hostname: ${ip_address}.81
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.81
+    external_links:
+      - zookeeper
+    environment:
+      - "HBASE_MANAGES_ZK=false"
+    volumes:
+      - ./hbase/region/conf:/hbase/conf
+      - ./hbase/region/logs:/hbase/logs
+#    ports:
+#      - 16030:16030
+#      - 16201:16201
+#      - 16301:16301
+
+  hbase-thrift:
+    image: harisekhon/hbase:${VERSION:-latest}
+    container_name: hbasethrift
+    command: thrift
+    hostname: ${ip_address}.82
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.82
+    external_links:
+      - zookeeper
+    environment:
+      - "HBASE_MANAGES_ZK=false"
+    volumes:
+      - ./hbase/thrift/conf:/hbase/conf
+      - ./hbase/thrift/logs:/hbase/logs
+#    ports:
+#      - 9090:9090
+#      - 9095:9095
+  hbase-stargate:
+    image: harisekhon/hbase:${VERSION:-latest}
+    container_name: hbasestargate
+    command: stargate
+    hostname: ${ip_address}.83
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.83
+    external_links:
+      - zookeeper
+    environment:
+      - "HBASE_MANAGES_ZK=false"
+    volumes:
+      - ./hbase/stargate/conf:/hbase/conf
+      - ./hbase/stargate/logs:/hbase/logs
+#    ports:
+#      - 8080:8080
+#      - 8085:8085
+
+networks:
+  default:
+    external:
+      name: webnet
+

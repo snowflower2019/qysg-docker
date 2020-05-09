@@ -1,0 +1,20 @@
+version: "3.3"
+services:
+  tomcat:
+    image: tomcat:jdk14-openjdk-oracle
+    container_name: tomcat
+    restart: always
+    hostname: ${ip_address}.60
+    networks:
+      default:
+        ipv4_address: ${ip_address}.60
+    volumes:
+      - "./tomcat/conf:/usr/local/tomcat/conf"
+      - "./tomcat/webapps:/usr/local/tomcat/webapps"
+      - "./tomcat/logs:/usr/local/tomcat/logs"
+
+networks:
+  default:
+    external:
+      name: webnet
+

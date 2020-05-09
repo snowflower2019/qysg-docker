@@ -1,0 +1,126 @@
+version: "3.3"
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode
+    container_name: namenode
+    restart: always
+    hostname: ${ip_address}.70
+    networks:
+      default:
+        ipv4_address: ${ip_address}.70
+    volumes:
+      - ./hadoop/namenode/data:/hadoop/dfs/name
+      - ./hadoop/namenode/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/namenode/logs:/opt/hadoop-3.2.1/logs
+    environment:
+      - CLUSTER_NAME=qysghadoop
+    env_file:
+      - ./hadoop/hadoop.env
+
+  datanode1:
+    image: bde2020/hadoop-datanode
+    container_name: datanode1
+    restart: always
+    hostname: ${ip_address}.71
+    networks:
+      default:
+        ipv4_address: ${ip_address}.71
+    depends_on:
+      - namenode
+    volumes:
+      - ./hadoop/datanode1/data:/hadoop/dfs/data
+      - ./hadoop/datanode1/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/datanode1/logs:/opt/hadoop-3.2.1/logs
+    env_file:
+      - ./hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+  
+  datanode2:
+    image: bde2020/hadoop-datanode
+    container_name: datanode2
+    restart: always
+    hostname: ${ip_address}.72
+    networks:
+      default:
+        ipv4_address: ${ip_address}.72
+    depends_on:
+      - namenode
+    volumes:
+      - ./hadoop/datanode2/data:/hadoop/dfs/data
+      - ./hadoop/datanode2/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/datanode2/logs:/opt/hadoop-3.2.1/logs
+    env_file:
+      - ./hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+            
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager
+    container_name: resourcemanager
+    hostname: ${ip_address}.73
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.73
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    env_file:
+      - ./hadoop/hadoop.env
+    volumes:
+      - ./hadoop/resourcemanager/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/resourcemanager/logs:/opt/hadoop-3.2.1/logs
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864"
+
+  historyserver:
+    image: bde2020/hadoop-historyserver
+    container_name: historyserver
+    hostname: ${ip_address}.74
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.74
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    volumes:
+      - ./hadoop/historyserver/timeline:/hadoop/yarn/timeline
+      - ./hadoop/historyserver/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/historyserver/logs:/opt/hadoop-3.2.1/logs
+    env_file:
+      - ./hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
+  
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager
+    container_name: nodemanager1
+    hostname: ${ip_address}.75
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.75
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    volumes:
+      - ./hadoop/nodemanager1/conf:/opt/hadoop-3.2.1/etc/hadoop
+      - ./hadoop/nodemanager1/logs:/opt/hadoop-3.2.1/logs
+    env_file:
+      - ./hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
+      
+  
+
+networks:
+  default:
+    external:
+      name: webnet
+

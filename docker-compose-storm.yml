@@ -1,0 +1,69 @@
+version: "3.3"
+services:
+
+  nimbus:
+    image: storm
+    container_name: nimbus
+    command: storm nimbus
+    hostname: ${ip_address}.40
+    networks:
+      default:
+        ipv4_address: ${ip_address}.40
+    external_links:
+      - zookeeper
+    restart: always
+    volumes:
+      - ./storm/lib:/apache-storm-2.1.0/lib
+      - ./storm/jars:/jars
+      - ./storm/logs:/logs
+      - ./storm/data:/data
+      - ./storm/conf:/conf
+
+  supervisor1:
+    image: storm
+    container_name: supervisor1
+    command: storm supervisor
+    hostname: ${ip_address}.41
+    networks:
+      default:
+        ipv4_address: ${ip_address}.41
+    links:
+      - nimbus
+    external_links:
+      - zookeeper
+    restart: always
+    
+  supervisor2:
+    image: storm
+    container_name: supervisor2
+    hostname: ${ip_address}.42
+    command: storm supervisor
+    networks:
+      default:
+        ipv4_address: ${ip_address}.42
+    depends_on:
+      - nimbus
+    links:
+      - nimbus
+    external_links:
+      - zookeeper
+    restart: always
+
+  stormui:
+    image: storm
+    container_name: stormui
+    command: storm ui
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.43
+    depends_on:
+      - nimbus
+    volumes:
+      - ./storm/ui/conf:/apache-storm-2.1.0/conf
+
+networks:
+  default:
+    external:
+      name: webnet
+
