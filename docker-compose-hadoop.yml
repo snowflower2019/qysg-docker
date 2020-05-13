@@ -74,7 +74,7 @@ services:
       - ./hadoop/resourcemanager/conf:/opt/hadoop-3.2.1/etc/hadoop
       - ./hadoop/resourcemanager/logs:/opt/hadoop-3.2.1/logs
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864"
+      SERVICE_PRECONDITION: "namenode:8020 namenode:9870 datanode1:9864 datanode2:9864"
 
   historyserver:
     image: bde2020/hadoop-historyserver
@@ -95,7 +95,7 @@ services:
     env_file:
       - ./hadoop/hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
+      SERVICE_PRECONDITION: "namenode:8020 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
   
   nodemanager1:
     image: bde2020/hadoop-nodemanager
@@ -115,9 +115,7 @@ services:
     env_file:
       - ./hadoop/hadoop.env
     environment:
-      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
-      
-  
+      SERVICE_PRECONDITION: "namenode:8020 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
 
 networks:
   default:

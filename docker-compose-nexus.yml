@@ -1,12 +1,18 @@
 version: "3.3"
 services:
-  nexus: 
-    restart: always 
-    image: sonatype/nexus3 
+  nexus:
+    restart: always
+    image: sonatype/nexus3
+    hostname: ${ip_address}.2
     container_name: nexus
-    network_mode: host
-    ports:
-      - 8081:8081
+    networks:
+      default:
+        ipv4_address: ${ip_address}.2
     volumes:
       - "./nexus/data:/nexus-data"
+
+networks:
+  default:
+    external:
+      name: webnet
 

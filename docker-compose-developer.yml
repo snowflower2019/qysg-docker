@@ -20,10 +20,9 @@ services:
       default:
         ipv4_address: ${ip_address}.3
     volumes:
-      - "./nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro"
-      - "./nginx/www:/usr/share/nginx/html"
+      - "./nginx/conf:/etc/nginx/conf.d"
       - "./nginx/logs:/var/log/nginx"
-      - "./nginx/conf.d:/etc/nginx/conf.d"
+      - "./nginx/www:/usr/share/nginx/html"
     environment:
       - TZ=Asia/Shanghai
 
@@ -39,8 +38,8 @@ services:
   kafka1:
     image: wurstmeister/kafka
     container_name: kafka1
-    restart: always
     hostname: ${ip_address}.5
+    restart: always
     networks:
       default:
         ipv4_address: ${ip_address}.5
@@ -48,8 +47,8 @@ services:
       - zookeeper
     depends_on:
       - zookeeper
-    volumes:
-      - ./kafka/logs1:/kafka
+#    volumes:
+#      - ./kafka/logs1:/kafka
     environment:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${ip_address}.5:9092
@@ -79,8 +78,8 @@ services:
       - zookeeper
     depends_on:
       - zookeeper
-    volumes:
-      - ./kafka/logs2:/kafka
+#    volumes:
+#      - ./kafka/logs2:/kafka
     environment:
       KAFKA_HOST_NAME: kafka2
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
@@ -177,331 +176,23 @@ services:
       - "./mongo/config:/data/configdb"
     command: mongod --auth # 启动授权登录
 
-
-  nimbus:
-    image: storm
-    container_name: nimbus
-    command: storm nimbus
-    hostname: ${ip_address}.40
-    networks:
-      default:
-        ipv4_address: ${ip_address}.40
-    depends_on:
-      - zookeeper
-    links:
-      - zookeeper
-    restart: always
-    volumes:
-      - ./storm/lib:/apache-storm-2.1.0/lib
-      - ./storm/jars:/jars
-      - ./storm/logs:/logs
-      - ./storm/data:/data
-      - ./storm/conf:/conf
-
-  supervisor1:
-    image: storm
-    container_name: supervisor1
-    command: storm supervisor
-    hostname: ${ip_address}.41
-    networks:
-      default:
-        ipv4_address: ${ip_address}.41
-    depends_on:
-      - nimbus
-      - zookeeper
-    links:
-      - nimbus
-      - zookeeper
-    restart: always
-    
-  supervisor2:
-    image: storm
-    container_name: supervisor2
-    hostname: ${ip_address}.42
-    command: storm supervisor
-    networks:
-      default:
-        ipv4_address: ${ip_address}.42
-    depends_on:
-      - nimbus
-      - zookeeper
-    links:
-      - nimbus
-      - zookeeper
-    restart: always
-
-  stormui:
-    image: storm
-    container_name: stormui
-    hostname: ${ip_address}.43
-    command: storm ui
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.43
-    depends_on:
-      - nimbus
-    volumes:
-      - ./storm/ui/conf:/apache-storm-2.1.0/conf
-
-  sparkmaster:
-    image: gettyimages/spark
-    container_name: sparkmaster
-    hostname: ${ip_address}.50
-    command: bin/spark-class org.apache.spark.deploy.master.Master -h sparkmaster
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.50
-    environment:
-      MASTER: spark://sparkmaster:7077
-      SPARK_CONF_DIR: /conf
-      SPARK_MASTER_WEBUI_PORT: 8090
-    volumes:
-      - ./spark/master/conf:/conf
-      - ./spark/master/data:/data
-      - ./spark/master/jars:/jars
-      
-  sparkworker1:
-    image: gettyimages/spark
-    container_name: sparkworker1
-    hostname: ${ip_address}.51
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://sparkmaster:7077
-    restart: always
-    depends_on:
-      - sparkmaster
-    links:
-      - sparkmaster
-    networks:
-      default:
-        ipv4_address: ${ip_address}.51
-    environment:
-      SPARK_CONF_DIR: /conf
-      SPARK_WORKER_CORES: 8
-      SPARK_WORKER_MEMORY: 8g
-      SPARK_WORKER_PORT: 8881
-      SPARK_WORKER_WEBUI_PORT: 8091
-    volumes:
-      - ./spark/worker1/conf:/conf
-      - ./spark/worker1/data:/data
-
-  sparkworker2:
-    image: gettyimages/spark
-    container_name: sparkworker2
-    hostname: ${ip_address}.52
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://sparkmaster:7077
-    networks:
-      default:
-        ipv4_address: ${ip_address}.52
-    restart: always
-    depends_on:
-      - sparkmaster
-    links:
-      - sparkmaster
-    environment:
-      SPARK_CONF_DIR: /conf
-      SPARK_WORKER_CORES: 8
-      SPARK_WORKER_MEMORY: 8g
-      SPARK_WORKER_PORT: 8881
-      SPARK_WORKER_WEBUI_PORT: 8092
-    volumes:
-      - ./spark/worker2/conf:/conf
-      - ./spark/worker2/data:/data
-
-
   tomcat:
-    image: tomcat:10-jdk14-openjdk-oracle
+    image: tomcat:jdk14-openjdk-oracle
     container_name: tomcat
     restart: always
     hostname: ${ip_address}.60
     networks:
       default:
         ipv4_address: ${ip_address}.60
+    depends_on:
+      - redis
+      - mysql
+      - kafka1
+      - kafka2
     volumes:
       - "./tomcat/conf:/usr/local/tomcat/conf"
       - "./tomcat/webapps:/usr/local/tomcat/webapps"
       - "./tomcat/logs:/usr/local/tomcat/logs"
-
-
-  namenode:
-    image: bde2020/hadoop-namenode
-    container_name: namenode
-    restart: always
-    hostname: ${ip_address}.70
-    networks:
-      default:
-        ipv4_address: ${ip_address}.70
-    volumes:
-      - ./hadoop/namenode/data:/hadoop/dfs/name
-      - ./hadoop/namenode/conf:/opt/hadoop-3.2.1/etc/hadoop
-    environment:
-      - CLUSTER_NAME=test
-    env_file:
-      - ./hadoop/hadoop.env
-
-  datanode1:
-    image: bde2020/hadoop-datanode
-    container_name: datanode1
-    restart: always
-    hostname: ${ip_address}.71
-    networks:
-      default:
-        ipv4_address: ${ip_address}.71
-    depends_on:
-      - namenode
-    volumes:
-      - ./hadoop/datanode1/data:/hadoop/dfs/data
-      - ./hadoop/datanode1/conf:/opt/hadoop-3.2.1/etc/hadoop
-    env_file:
-      - ./hadoop/hadoop.env
-  
-  datanode2:
-    image: bde2020/hadoop-datanode
-    container_name: datanode2
-    restart: always
-    hostname: ${ip_address}.72
-    networks:
-      default:
-        ipv4_address: ${ip_address}.72
-    depends_on:
-      - namenode
-    volumes:
-      - ./hadoop/datanode2/data:/hadoop/dfs/data
-      - ./hadoop/datanode2/conf:/opt/hadoop-3.2.1/etc/hadoop
-    env_file:
-      - ./hadoop/hadoop.env
-      
-  resourcemanager:
-    image: bde2020/hadoop-resourcemanager
-    container_name: resourcemanager
-    hostname: ${ip_address}.73
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.73
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    env_file:
-      - ./hadoop/hadoop.env
-    volumes:
-      - ./hadoop/resourcemanager/conf:/opt/hadoop-3.2.1/etc/hadoop
-  
-  historyserver:
-    image: bde2020/hadoop-historyserver
-    container_name: historyserver
-    hostname: ${ip_address}.74
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.74
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    volumes:
-      - ./hadoop/historyserver/timeline:/hadoop/yarn/timeline
-      - ./hadoop/historyserver/conf:/opt/hadoop-3.2.1/etc/hadoop
-    env_file:
-      - ./hadoop/hadoop.env
-  
-  nodemanager1:
-    image: bde2020/hadoop-nodemanager
-    container_name: nodemanager1
-    hostname: ${ip_address}.75
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.75
-    depends_on:
-      - namenode
-      - datanode1
-      - datanode2
-    volumes:
-      - ./hadoop/nodemanager1/conf:/opt/hadoop-3.2.1/etc/hadoop
-    env_file:
-      - ./hadoop/hadoop.env
-  
-  hbase-master:
-    image: harisekhon/hbase:${VERSION:-latest}
-    container_name: hbasemaster
-    command: master
-    restart: always
-    hostname: ${ip_address}.80
-    networks:
-      default:
-        ipv4_address: ${ip_address}.80
-    environment:
-      - "HBASE_MANAGES_ZK=false"
-      - "ZK_HOST=zookeeper"
-      - "ZK_PORT=2181"
-    external_links:
-      - zookeeper
-      - namenode
-    volumes:
-      - ./hbase/master/conf:/hbase/conf
-      - ./hbase/master/data:/hbase-data
-#    ports:
-#      - 16000:16000
-#      - 16010:16010
-
-  hbase-regionserver:
-    image: harisekhon/hbase:${VERSION:-latest}
-    container_name: hbaseregion
-    command: regionserver
-    hostname: ${ip_address}.81
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.81
-    external_links:
-      - zookeeper
-    environment:
-      - "HBASE_MANAGES_ZK=false"
-    volumes:
-      - ./hbase/region/conf:/hbase/conf
-#    ports:
-#      - 16030:16030
-#      - 16201:16201
-#      - 16301:16301
-
-  hbase-thrift:
-    image: harisekhon/hbase:${VERSION:-latest}
-    container_name: hbasethrift
-    command: thrift
-    hostname: ${ip_address}.82
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.82
-    external_links:
-      - zookeeper
-    environment:
-      - "HBASE_MANAGES_ZK=false"
-    volumes:
-      - ./hbase/thrift/conf:/hbase/conf
-#    ports:
-#      - 9090:9090
-#      - 9095:9095
-  hbase-stargate:
-    image: harisekhon/hbase:${VERSION:-latest}
-    container_name: hbasestargate
-    command: stargate
-    hostname: ${ip_address}.83
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.83
-    external_links:
-      - zookeeper
-    environment:
-      - "HBASE_MANAGES_ZK=false"
-    volumes:
-      - ./hbase/stargate/conf:/hbase/conf
-#    ports:
-#      - 8080:8080
-#      - 8085:8085
 
 networks:
   default:
