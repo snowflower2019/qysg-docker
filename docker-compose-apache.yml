@@ -1,0 +1,16 @@
+version: "3.3"
+services:
+  apache2:
+    image: httpd
+    container_name: apache2
+    hostname: ${ip_address}.7
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.7
+
+networks:
+  default:
+    external:
+      name: webnet
+

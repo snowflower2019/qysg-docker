@@ -1,0 +1,12 @@
+version: "3.3"
+services:
+
+  kms:
+    image: kurento/kurento-media-server
+            #5.0.0-M4
+    container_name: kms
+    hostname: 192.168.1.6
+    network_mode: host
+#      default:
+#        ipv4_address: ${ip_address}.111
+

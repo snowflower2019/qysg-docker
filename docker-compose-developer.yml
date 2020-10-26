@@ -19,13 +19,35 @@ services:
     networks:
       default:
         ipv4_address: ${ip_address}.3
+    ports:
+      - 80:80
+      - 443:443
     volumes:
+      - "./nginx/cas:/etc/nginx/cas"
       - "./nginx/conf:/etc/nginx/conf.d"
       - "./nginx/logs:/var/log/nginx"
       - "./nginx/www:/usr/share/nginx/html"
     environment:
       - TZ=Asia/Shanghai
 
+#  jenkins:
+#    container_name: jenkins
+#    image: jenkins/jenkins
+#    restart: always
+#    hostname: ${ip_address}.100
+#    environment:
+#      - TZ=Asia/Shanghai
+##   ports:
+##     - '3083:8080'
+##     - '50001:50000'
+#    volumes:
+#      - /opt/repository:/root/repository
+##      - ./jenkins/data:/var/jenkins_home:z
+##      - ./jenkins/data/docker.sock:/var/run/docker.sock
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.100
+  
   zookeeper:
     image: zookeeper
     container_name: zookeeper
@@ -97,44 +119,47 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       JMX_PORT: 9999
 
-  kafkamanager:
-    image: hlebalbau/kafka-manager
-    container_name: kafkamanager
-    hostname: ${ip_address}.8
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.8
-    links:
-      - zookeeper
-      - kafka1
-      - kafka2
-    depends_on:
-      - kafka1
-      - kafka2
-    environment:
-      ZK_HOSTS: zookeeper:2181
-      KAFKA_BROKERS: kafka1:9092,kafka2:9092
-      KAFKA_MANAGER_AUTH_ENABLED: "true"
-      KAFKA_MANAGER_USERNAME: "root"
-      KAFKA_MANAGER_PASSWORD: "qysg18xxjs"
-      APPLICATION_SECRET: letmein
-      KM_ARGS: -Djava.net.preferIPv4Stack=true
-    volumes:
-      - ./kafka/manager/conf:/kafka-manager/conf
-      - ./kafka/manager/logs:/kafka-manager/logs
+#  kafkamanager:
+#    image: hlebalbau/kafka-manager
+#    container_name: kafkamanager
+#    hostname: ${ip_address}.8
+#    restart: always
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.8
+#    links:
+#      - zookeeper
+#      - kafka1
+#      - kafka2
+#    depends_on:
+#      - kafka1
+#      - kafka2
+#    environment:
+#      ZK_HOSTS: zookeeper:2181
+#      KAFKA_BROKERS: kafka1:9092,kafka2:9092
+#      KAFKA_MANAGER_AUTH_ENABLED: "true"
+#      KAFKA_MANAGER_USERNAME: "root"
+#      KAFKA_MANAGER_PASSWORD: "qysg18xxjs"
+#      APPLICATION_SECRET: letmein
+#      KM_ARGS: -Djava.net.preferIPv4Stack=true
+#    volumes:
+#      - ./kafka/manager/conf:/kafka-manager/conf
+#      - ./kafka/manager/logs:/kafka-manager/logs
 
   redis: 
     image: redis
     container_name: redis
     hostname: ${ip_address}.10
     restart: always
-    command: redis-server --requirepass lhbwypems1324 --appendonly yes
+    command: redis-server --notify-keyspace-events AKE --requirepass lhbwypems1324 --appendonly yes
+#    redis-server /etc/redis/redis.conf
+#    redis-server --notify-keyspace-events AKE --requirepass lhbwypems1324 --appendonly yes
     networks:
       default:
         ipv4_address: ${ip_address}.10
     volumes:
       - "./redis/data:/data"
+#      - "./redis/logs:/var/log"
 #      - "./redis/redis.conf:/etc/redis/redis.conf"
 
   mysql:
@@ -151,34 +176,97 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --explicit_defaults_for_timestamp=true
       --max_allowed_packet=128M
+      --expire_logs_days=7
+      --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+      --max_connections=1000
+      --secure_file_priv=/var/lib/mysql
       --lower_case_table_names=1
     environment:
       MYSQL_ROOT_PASSWORD: "lhbwyp_ems"
     volumes:
       - "./mysql/data:/var/lib/mysql"
       - ./mysql/conf:/etc/mysql
-#      - "./mysql/conf/my.cnf:/etc/mysql/my.cnf"
-#      - "./mysql/conf.d:/etc/mysql/conf.d"
 
-  mongo:
-    image: mongo
-    container_name: mongo
-    hostname: ${ip_address}.30
+  influx:
+    image: influxdb
+    restart: always
+    hostname: ${ip_address}.40
+    container_name: influx
+    networks:
+      default:
+        ipv4_address: ${ip_address}.40
+    volumes:
+      - "./influx/conf:/etc/influxdb"
+      - "./influx/data:/var/lib/influxdb/data"
+      - "./influx/meta:/var/lib/influxdb/meta"
+      - "./influx/wal:/var/lib/influxdb/wal"
+
+#  mongo:
+#    image: mongo
+#    container_name: mongo
+#    hostname: ${ip_address}.30
+#    restart: always
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.30
+#    environment:
+#      MONGO_INITDB_ROOT_USERNAME: root
+#      MONGO_INITDB_ROOT_PASSWORD: qysg18xxjs
+#    volumes:
+#      - "./mongo/data:/data/db"
+#      - "./mongo/config:/data/configdb"
+#    command: mongod --auth # 启动授权登录
+
+  hazelcastmc:
+    image: hazelcast/management-center
+    container_name: hazelcastmc
+    restart: always
+    hostname: ${ip_address}.50
+    networks:
+      default:
+        ipv4_address: ${ip_address}.50
+    environment:
+      JAVA_OPTS: -Dhazelcast.mc.healthCheck.enable=true
+      MC_ADMIN_USER: root
+      MC_ADMIN_PASSWORD: qysg2020xxjs
+
+  hazelcast1:
+    image: hazelcast/hazelcast
+    hostname: ${ip_address}.51
+    container_name: hazelcast1
     restart: always
     networks:
       default:
-        ipv4_address: ${ip_address}.30
+        ipv4_address: ${ip_address}.51
+    depends_on:
+      - redis
+      - influx
+      - mysql
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: qysg18xxjs
-    volumes:
-      - "./mongo/data:/data/db"
-      - "./mongo/config:/data/configdb"
-    command: mongod --auth # 启动授权登录
+      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.51:5701 -Xms512M -Xmx1024M
+      MANCENTER_URL: http://${ip_address}.50:8080
+      LOGGING_LEVEL: FINST
 
-  tomcat:
+ hazelcast2:
+    image: hazelcast/hazelcast
+    hostname: ${ip_address}.52
+    container_name: hazelcast2
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.52
+    depends_on:
+      - redis
+      - influx
+      - mysql
+    environment:
+      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.52:5701 -Xms512M -Xmx1024M
+      MANCENTER_URL: http://${ip_address}.50:8080
+      LOGGING_LEVEL: FINST
+
+  register:
     image: tomcat:jdk14-openjdk-oracle
-    container_name: tomcat
+    container_name: register
     restart: always
     hostname: ${ip_address}.60
     networks:
@@ -189,10 +277,28 @@ services:
       - mysql
       - kafka1
       - kafka2
+    environment:
+      CATALINA_OPTS: -Dcom.sun.management.jmxremote.port=9090 -Dcom.sun.management.jmxremote.rmi.port=9090 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+      JAVA_OPTS: -Xms1024m -Xmx1024m -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=728m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:NewSize=512m -XX:MaxNewSize=512m
     volumes:
-      - "./tomcat/conf:/usr/local/tomcat/conf"
-      - "./tomcat/webapps:/usr/local/tomcat/webapps"
-      - "./tomcat/logs:/usr/local/tomcat/logs"
+      - "./tomcat/register/conf:/usr/local/tomcat/conf"
+      - "./tomcat/register/webapps:/usr/local/tomcat/webapps"
+      - "./tomcat/register/logs:/usr/local/tomcat/logs"
+
+  tomcat:
+    image: tomcat:jdk14-openjdk-oracle
+    container_name: tomcat
+    restart: always
+    hostname: ${ip_address}.65
+    networks:
+      default:
+        ipv4_address: ${ip_address}.65
+    depends_on:
+      - register
+    volumes:
+      - "./tomcat/business/conf:/usr/local/tomcat/conf"
+      - "./tomcat/business/webapps:/usr/local/tomcat/webapps"
+      - "./tomcat/business/logs:/usr/local/tomcat/logs"
 
 networks:
   default:

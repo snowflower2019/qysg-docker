@@ -1,0 +1,18 @@
+version: "3.3"
+
+services:
+
+  openmeetings:
+    image: apache/openmeetings:5.0.0-M4
+    container_name: openmeetings
+    hostname: ${ip_address}.110
+    restart: always
+    networks:
+      default:
+        ipv4_address: ${ip_address}.110
+
+networks:
+  default:
+    external:
+      name: webnet
+
