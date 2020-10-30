@@ -247,7 +247,7 @@ services:
       MANCENTER_URL: http://${ip_address}.50:8080
       LOGGING_LEVEL: FINST
 
- hazelcast2:
+  hazelcast2:
     image: hazelcast/hazelcast
     hostname: ${ip_address}.52
     container_name: hazelcast2
@@ -265,7 +265,7 @@ services:
       LOGGING_LEVEL: FINST
 
   register:
-    image: tomcat:jdk14-openjdk-oracle
+    image: tomcat:10-jdk15-openjdk-oracle
     container_name: register
     restart: always
     hostname: ${ip_address}.60
@@ -286,7 +286,7 @@ services:
       - "./tomcat/register/logs:/usr/local/tomcat/logs"
 
   tomcat:
-    image: tomcat:jdk14-openjdk-oracle
+    image: tomcat:10-jdk15-openjdk-oracle
     container_name: tomcat
     restart: always
     hostname: ${ip_address}.65
