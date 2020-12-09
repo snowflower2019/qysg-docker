@@ -1,15 +1,15 @@
 version: "3.3"
 services:
-  nexus:
-    restart: always
-    image: sonatype/nexus3
-    hostname: ${ip_address}.2
-    container_name: nexus
-    networks:
-      default:
-        ipv4_address: ${ip_address}.2
-    volumes:
-      - "./nexus/data:/nexus-data"
+#  nexus:
+#    restart: always
+#    image: sonatype/nexus3
+#    hostname: ${ip_address}.2
+#    container_name: nexus
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.2
+#    volumes:
+#      - "./nexus/data:/nexus-data"
 
   nginx:
     image: nginx
@@ -88,36 +88,36 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       JMX_PORT: 9999
 
-  kafka2:
-    image: wurstmeister/kafka
-    container_name: kafka2
-    hostname: ${ip_address}.6
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.6
-    links:
-      - zookeeper
-    depends_on:
-      - zookeeper
-#    volumes:
-#      - ./kafka/logs2:/kafka
-    environment:
-      KAFKA_HOST_NAME: kafka2
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${ip_address}.6:9092
-      KAFKA_ADVERTISED_HOST_NAME: kafka2
-      KAFKA_ADVERTISED_PORT: 9092
-      KAFKA_DELETE_TOPIC_ENABLE: "true"
-      KAFKA_LOG_RETENTION_HOURS: 1
-      KAFKA_BROKER_ID: 2
-      KAFKA_MESSAGE_MAX_BYTES: 10000000
-      KAFKA_REPLICA_FETCH_MAX_BYTES: 10000000
-      KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS: 60000
-      KAFKA_NUM_PARTITIONS: 2
-      KAFKA_DELETE_RETENTION_MS: 1000
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      JMX_PORT: 9999
+#  kafka2:
+#    image: wurstmeister/kafka
+#    container_name: kafka2
+#    hostname: ${ip_address}.6
+#    restart: always
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.6
+#    links:
+#      - zookeeper
+#    depends_on:
+#      - zookeeper
+##    volumes:
+##      - ./kafka/logs2:/kafka
+#    environment:
+#      KAFKA_HOST_NAME: kafka2
+#      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${ip_address}.6:9092
+#      KAFKA_ADVERTISED_HOST_NAME: kafka2
+#      KAFKA_ADVERTISED_PORT: 9092
+#      KAFKA_DELETE_TOPIC_ENABLE: "true"
+#      KAFKA_LOG_RETENTION_HOURS: 1
+#      KAFKA_BROKER_ID: 2
+#      KAFKA_MESSAGE_MAX_BYTES: 10000000
+#      KAFKA_REPLICA_FETCH_MAX_BYTES: 10000000
+#      KAFKA_GROUP_MAX_SESSION_TIMEOUT_MS: 60000
+#      KAFKA_NUM_PARTITIONS: 2
+#      KAFKA_DELETE_RETENTION_MS: 1000
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      JMX_PORT: 9999
 
 #  kafkamanager:
 #    image: hlebalbau/kafka-manager
@@ -197,9 +197,9 @@ services:
         ipv4_address: ${ip_address}.40
     volumes:
       - "./influx/conf:/etc/influxdb"
-      - "./influx/data:/var/lib/influxdb/data"
-      - "./influx/meta:/var/lib/influxdb/meta"
-      - "./influx/wal:/var/lib/influxdb/wal"
+#      - "./influx/data:/var/lib/influxdb/data"
+#      - "./influx/meta:/var/lib/influxdb/meta"
+#      - "./influx/wal:/var/lib/influxdb/wal"
 
 #  mongo:
 #    image: mongo
@@ -217,88 +217,99 @@ services:
 #      - "./mongo/config:/data/configdb"
 #    command: mongod --auth # 启动授权登录
 
-  hazelcastmc:
-    image: hazelcast/management-center
-    container_name: hazelcastmc
-    restart: always
-    hostname: ${ip_address}.50
-    networks:
-      default:
-        ipv4_address: ${ip_address}.50
-    environment:
-      JAVA_OPTS: -Dhazelcast.mc.healthCheck.enable=true
-      MC_ADMIN_USER: root
-      MC_ADMIN_PASSWORD: qysg2020xxjs
+#  tdengine:
+#    image: tdengine/tdengine
+#    restart: always
+#    hostname: ${ip_address}.60
+#    container_name: tdengine
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.60
+#    volumes:
+#      - "./tdengine/conf/taos.cfg:/etc/taos/taos.cfg"
 
-  hazelcast1:
-    image: hazelcast/hazelcast
-    hostname: ${ip_address}.51
-    container_name: hazelcast1
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.51
-    depends_on:
-      - redis
-      - influx
-      - mysql
-    environment:
-      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.51:5701 -Xms512M -Xmx1024M
-      MANCENTER_URL: http://${ip_address}.50:8080
-      LOGGING_LEVEL: FINST
+#  hazelcastmc:
+#    image: hazelcast/management-center
+#    container_name: hazelcastmc
+#    restart: always
+#    hostname: ${ip_address}.50
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.50
+#    environment:
+#      JAVA_OPTS: -Dhazelcast.mc.healthCheck.enable=true
+#      MC_ADMIN_USER: root
+#      MC_ADMIN_PASSWORD: qysg2020xxjs
 
-  hazelcast2:
-    image: hazelcast/hazelcast
-    hostname: ${ip_address}.52
-    container_name: hazelcast2
-    restart: always
-    networks:
-      default:
-        ipv4_address: ${ip_address}.52
-    depends_on:
-      - redis
-      - influx
-      - mysql
-    environment:
-      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.52:5701 -Xms512M -Xmx1024M
-      MANCENTER_URL: http://${ip_address}.50:8080
-      LOGGING_LEVEL: FINST
+#  hazelcast1:
+#    image: hazelcast/hazelcast
+#    hostname: ${ip_address}.51
+#    container_name: hazelcast1
+#    restart: always
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.51
+#    depends_on:
+#      - redis
+#      - influx
+#      - mysql
+#    environment:
+#      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.51:5701 -Xms512M -Xmx1024M
+#      MANCENTER_URL: http://${ip_address}.50:8080
+#      LOGGING_LEVEL: FINST
 
-  register:
-    image: tomcat:jdk15-openjdk-oracle
-    container_name: register
-    restart: always
-    hostname: ${ip_address}.60
-    networks:
-      default:
-        ipv4_address: ${ip_address}.60
-    depends_on:
-      - redis
-      - mysql
-      - kafka1
-      - kafka2
-    environment:
-      CATALINA_OPTS: -Dcom.sun.management.jmxremote.port=9090 -Dcom.sun.management.jmxremote.rmi.port=9090 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
-      JAVA_OPTS: -Xms1024m -Xmx1024m -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=728m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:NewSize=512m -XX:MaxNewSize=512m
-    volumes:
-      - "./tomcat/register/conf:/usr/local/tomcat/conf"
-      - "./tomcat/register/webapps:/usr/local/tomcat/webapps"
-      - "./tomcat/register/logs:/usr/local/tomcat/logs"
+#  hazelcast2:
+#    image: hazelcast/hazelcast
+#    hostname: ${ip_address}.52
+#    container_name: hazelcast2
+#    restart: always
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.52
+#    depends_on:
+#      - redis
+#      - influx
+#      - mysql
+#    environment:
+#      JAVA_OPTS: -Dhazelcast.local.publicAddress=${ip_address}.52:5701 -Xms512M -Xmx1024M
+#      MANCENTER_URL: http://${ip_address}.50:8080
+#      LOGGING_LEVEL: FINST
 
-  tomcat:
-    image: tomcat:jdk15-openjdk-oracle
-    container_name: tomcat
-    restart: always
-    hostname: ${ip_address}.65
-    networks:
-      default:
-        ipv4_address: ${ip_address}.65
-    depends_on:
-      - register
-    volumes:
-      - "./tomcat/business/conf:/usr/local/tomcat/conf"
-      - "./tomcat/business/webapps:/usr/local/tomcat/webapps"
-      - "./tomcat/business/logs:/usr/local/tomcat/logs"
+#  register:
+#    image: tomcat:jdk15-openjdk-oracle
+#    container_name: register
+#    restart: always
+#    hostname: ${ip_address}.60
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.60
+#    depends_on:
+#      - redis
+#      - mysql
+#      - kafka1
+#      - kafka2
+#    environment:
+#      CATALINA_OPTS: -Dcom.sun.management.jmxremote.port=9090 -Dcom.sun.management.jmxremote.rmi.port=9090 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+#      JAVA_OPTS: -Xms1024m -Xmx1024m -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=728m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:NewSize=512m -XX:MaxNewSize=512m
+#    volumes:
+#      - "./tomcat/register/conf:/usr/local/tomcat/conf"
+#      - "./tomcat/register/webapps:/usr/local/tomcat/webapps"
+#      - "./tomcat/register/logs:/usr/local/tomcat/logs"
+
+#  tomcat:
+#    image: tomcat:jdk15-openjdk-oracle
+#    container_name: tomcat
+#    restart: always
+#    hostname: ${ip_address}.65
+#    networks:
+#      default:
+#        ipv4_address: ${ip_address}.65
+#    depends_on:
+#      - register
+#    volumes:
+#      - "./tomcat/business/conf:/usr/local/tomcat/conf"
+#      - "./tomcat/business/webapps:/usr/local/tomcat/webapps"
+#      - "./tomcat/business/logs:/usr/local/tomcat/logs"
 
 networks:
   default:
